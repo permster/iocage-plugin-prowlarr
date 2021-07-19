@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# $FreeBSD$
+#
+# PROVIDE: prowlarr
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# prowlarr_enable:    Set to YES to enable prowlarr
+#            Default: NO
+# prowlarr_user:    The user account used to run the prowlarr daemon.
+#            This is optional, however do not specifically set this to an
+#            empty string as this will cause the daemon to run as root.
+#            Default: media
+# prowlarr_group:    The group account used to run the prowlarr daemon.
+#            This is optional, however do not specifically set this to an
+#            empty string as this will cause the daemon to run with group wheel.
+#            Default: media
+# prowlarr_data_dir:    Directory where prowlarr configuration
+#            data is stored.
+#            Default: /var/db/prowlarr
+
+. /etc/rc.subr
+name=prowlarr
+rcvar=${name}_enable
+load_rc_config $name
+
+: ${prowlarr_enable:="NO"}
+: ${prowlarr_user:="prowlarr"}
+: ${prowlarr_group:="prowlarr"}
+: ${prowlarr_data_dir:="/config"}
+
+pidfile="${prowlarr_data_dir}/prowlarr.pid"
+command="/usr/sbin/daemon"
+command_args="-f /usr/local/share/Prowlarr/Prowlarr.exe --data=${prowlarr_data_dir} --nobrowser"
+
+start_precmd=prowlarr_precmd
+prowlarr_precmd() {
+    if [ ! -d ${prowlarr_data_dir} ]; then
+        install -d -o ${prowlarr_user} -g ${prowlarr_group} ${prowlarr_data_dir}
+    fi
+
+    export XDG_CONFIG_HOME=${prowlarr_data_dir}
+}
+
+run_rc_command "$1"
